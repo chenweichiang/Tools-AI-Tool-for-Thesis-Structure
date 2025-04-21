@@ -10,7 +10,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def extract_json_from_response(content):
-    """從回應中提取 JSON 內容"""
+    """從回應中擷取 JSON 內容"""
     # 嘗試找出 JSON 內容的開始和結束
     try:
         # 找出第一個 { 和最後一個 } 的位置
@@ -24,8 +24,19 @@ def extract_json_from_response(content):
     return None
 
 def analyze_research_purpose(research_purpose):
-    """分析研究目的並生成文獻探討架構"""
-    system_prompt = """你是一位專業的研究方法專家，擅長規劃文獻探討架構。
+    """分析研究目的並產生文獻探討架構"""
+    system_prompt = """您是一位專業的研究方法專家，擅長規劃文獻探討架構。
+請使用台灣繁體中文的用字習慣回覆，例如：
+- 使用「夥伴」而非「伙伴」
+- 使用「甚麼」而非「什麼」
+- 使用「裡面」而非「里面」
+- 使用「群組」而非「分組」
+- 使用「資料」而非「数据」
+- 使用「系統」而非「系统」
+- 使用「程式」而非「程序」
+- 使用「使用者」而非「用戶」
+- 使用「網路」而非「网络」
+- 使用「軟體」而非「软件」
 請嚴格按照以下 JSON 格式回覆，不要加入任何其他說明文字：
 {
     "sections": [
@@ -72,7 +83,7 @@ def analyze_research_purpose(research_purpose):
         try:
             return json.loads(content)
         except json.JSONDecodeError:
-            # 如果直接解析失敗，嘗試提取 JSON 部分
+            # 如果直接解析失敗，嘗試擷取 JSON 部分
             result = extract_json_from_response(content)
             if result:
                 return result
@@ -85,14 +96,19 @@ def analyze_research_purpose(research_purpose):
         return None
 
 def analyze_multiple_literature(section_title, literature_texts):
-    """分析多篇文獻內容並生成摘要分析"""
-    system_prompt = """你是一位專業的文獻分析專家，請協助分析輸入的多篇文獻內容。
+    """分析多篇文獻內容並產生摘要分析"""
+    system_prompt = """您是一位專業的文獻分析專家，請協助分析輸入的多篇文獻內容。
+請使用台灣繁體中文的用字習慣撰寫分析內容，注意：
+- 使用台灣的學術用語和專業術語
+- 使用台灣的標點符號習慣（如：使用「」引號）
+- 使用台灣的語氣詞和表達方式
+- 避免使用中國大陸的用語習慣
 從輸入的文字中識別出每篇文獻的 APA 引用格式和摘要內容，並進行分析整理。
 每篇文獻之間應該是用連續兩個換行符號分隔。"""
 
     user_prompt = f"""請分析以下多篇文獻內容，並按照以下格式整理每一篇：
-1. 識別並提取每篇文獻的 APA 引用格式
-2. 提取每篇文獻的摘要內容
+1. 識別並擷取每篇文獻的 APA 引用格式
+2. 擷取每篇文獻的摘要內容
 3. 分析每篇文獻與「{section_title}」章節的相關性
 4. 提供每篇文獻對該章節的主要貢獻
 5. 建議在文獻回顧中如何引用每篇文獻
@@ -143,8 +159,45 @@ def analyze_multiple_literature(section_title, literature_texts):
         return None
 
 def generate_literature_review(section_title, literature_list):
-    """生成文獻探討內容"""
-    system_prompt = """你是一位深耕於研究領域的專業學術研究者，擅長整合文獻並撰寫具有深度的文獻探討。在撰寫時：
+    """產生文獻探討內容"""
+    system_prompt = """您是一位深耕於研究領域的專業學術研究者，擅長整合文獻並撰寫具有深度的文獻探討。
+
+【用字規範】
+1. 使用台灣繁體中文的學術用語：
+   - 「研究」而非「研讨」
+   - 「歷程」而非「过程」
+   - 「方法」而非「方式」
+   - 「探討」而非「探讨」
+   - 「實施」而非「实行」
+   - 「成效」而非「成果」
+   - 「議題」而非「课题」
+   - 「建議」而非「建议」
+
+2. 使用台灣的標點符號：
+   - 使用「」作為中文引號
+   - 使用『』作為引號中的引號
+   - 破折號使用「──」
+   - 書名號使用《》
+   - 篇名號使用〈〉
+
+3. 使用台灣的表達方式：
+   - 「目前」而非「当前」
+   - 「之後」而非「之后」
+   - 「因此」而非「所以」
+   - 「然而」而非「但是」
+   - 「藉由」而非「通过」
+   - 「根據」而非「按照」
+   - 「顯示」而非「表明」
+
+4. 使用台灣的專業術語：
+   - 「資訊科技」而非「信息技术」
+   - 「電腦」而非「计算机」
+   - 「演算法」而非「算法」
+   - 「人工智慧」而非「人工智能」
+   - 「資料庫」而非「数据库」
+   - 「網際網路」而非「互联网」
+
+在撰寫時：
 1. 根據研究主題調整專業術語和論述方式
 2. 自然地融入研究者的觀察與經驗
 3. 展現深入的思考過程和邏輯推演
@@ -156,7 +209,7 @@ def generate_literature_review(section_title, literature_list):
 文獻資料：
 {json.dumps(literature_list, ensure_ascii=False, indent=2)}
 
-【寫作要求】
+【撰寫要求】
 1. 文章風格：
    - 運用第一人稱敘述，展現研究者的專業洞察
    - 保持學術嚴謹性的同時，融入個人觀點和經驗
@@ -196,7 +249,7 @@ def generate_literature_review(section_title, literature_list):
    - 說明研究價值和重要性
 
 請使用以下 JSON 格式回覆：
-{
+{{
     "literature_review": "完整的文獻探討內容",
     "references": [
         "APA格式的參考文獻列表"
@@ -209,7 +262,7 @@ def generate_literature_review(section_title, literature_list):
         "研究缺口1",
         "研究缺口2"
     ]
-}
+}}
 
 注意事項：
 1. 文獻引用要自然地融入論述中（使用 APA 格式）
@@ -236,11 +289,11 @@ def generate_literature_review(section_title, literature_list):
             if result:
                 return result
             else:
-                st.error("無法解析文獻探討生成結果")
+                st.error("無法解析文獻探討產生結果")
                 st.text_area("原始回應內容", content, height=200)
                 return None
     except Exception as e:
-        st.error(f"生成文獻探討時發生錯誤：{str(e)}")
+        st.error(f"產生文獻探討時發生錯誤：{str(e)}")
         return None
 
 def main():
@@ -259,15 +312,15 @@ def main():
     research_purpose = st.text_area(
         "請貼入您的研究目的內容",
         height=200,
-        help="將您生成的研究目的內容貼在這裡"
+        help="將您撰寫的研究目的內容貼在這裡"
     )
     
-    if st.button("生成文獻探討架構"):
+    if st.button("產生文獻探討架構"):
         if not research_purpose:
             st.error("請先輸入研究目的內容")
             return
             
-        with st.spinner("正在分析研究目的並生成架構..."):
+        with st.spinner("正在分析研究目的並產生架構..."):
             result = analyze_research_purpose(research_purpose)
             if result and 'sections' in result:
                 st.session_state.sections = result['sections']
@@ -311,20 +364,20 @@ def main():
                                 st.session_state.literature_data[section['title']]['literature'].extend(analysis_results)
                                 st.success(f"已成功分析並新增 {len(analysis_results)} 篇文獻")
             
-            # 生成文獻探討按鈕
+            # 產生文獻探討按鈕
             with col2:
-                if st.button(f"生成「{section['title']}」的文獻探討", key=f"review_{section['title']}"):
+                if st.button(f"產生「{section['title']}」的文獻探討", key=f"review_{section['title']}"):
                     if st.session_state.literature_data[section['title']]['literature']:
-                        with st.spinner("正在生成文獻探討內容..."):
+                        with st.spinner("正在產生文獻探討內容..."):
                             review_result = generate_literature_review(
                                 section['title'],
                                 st.session_state.literature_data[section['title']]['literature']
                             )
                             if review_result:
                                 st.session_state.literature_reviews[section['title']] = review_result
-                                st.success("已成功生成文獻探討內容")
+                                st.success("已成功產生文獻探討內容")
                     else:
-                        st.warning("請先新增文獻再生成文獻探討")
+                        st.warning("請先新增文獻再產生文獻探討")
             
             # 顯示已收集的文獻
             if st.session_state.literature_data[section['title']]['literature']:
@@ -368,8 +421,8 @@ def main():
         1. 使用上方的搜尋字串在 [SciSpace](https://typeset.io/) 搜尋相關文獻
         2. 從搜尋結果中複製多篇文獻的 APA 引用格式和摘要
         3. 將複製的內容直接貼到對應章節的輸入框中（每篇文獻之間請空一行）
-        4. 點擊「分析並新增文獻」按鈕，系統會自動分析並整理所有文獻內容
-        5. 收集足夠文獻後，點擊「生成文獻探討」按鈕產生該章節的文獻探討內容
+        4. 點選「分析並新增文獻」按鈕，系統會自動分析並整理所有文獻內容
+        5. 收集足夠文獻後，點選「產生文獻探討」按鈕產生該章節的文獻探討內容
         6. 建議每個章節至少收集 3-5 篇相關文獻
         """)
 
