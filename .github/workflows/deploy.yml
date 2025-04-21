@@ -6,9 +6,18 @@ on:
   pull_request:
     branches: [ main ]
 
+# 添加權限設定
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
     - uses: actions/checkout@v4
@@ -45,6 +54,9 @@ jobs:
         echo "from app import main" >> build/streamlit_app.py
         echo "if __name__ == '__main__':" >> build/streamlit_app.py
         echo "    main()" >> build/streamlit_app.py
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
