@@ -55,4 +55,7 @@ Desktop.ini
 
 # PyInstaller
 *.manifest
-*.spec 
+*.spec
+
+# Temporary files
+.research_purpose.tmp 

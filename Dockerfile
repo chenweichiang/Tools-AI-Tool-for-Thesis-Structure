@@ -1,36 +1,27 @@
-FROM ubuntu:22.04
+FROM python:3.11-slim
 
-# 避免安裝過程中的交互式提示
-ENV DEBIAN_FRONTEND=noninteractive
-
-# 安裝必要的工具
-RUN dpkg --add-architecture i386 && \
-    apt-get update && \
-    apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-dev \
-    gcc \
-    g++ \
-    mingw-w64 \
-    && rm -rf /var/lib/apt/lists/*
-
-# 設置工作目錄
 WORKDIR /app
 
-# 複製必要文件
+# 安裝系統依賴
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 複製必要檔案
 COPY requirements.txt .
-COPY app.py .
-COPY build_installer.py .
+COPY src/ ./src/
 COPY .env.example .
-COPY README.md .
 
-# 安裝 Python 依賴
-RUN pip3 install -r requirements.txt
-RUN pip3 install pyinstaller
+# 安裝 Python 套件
+RUN pip install --no-cache-dir -r requirements.txt
 
-# 設置環境變數
-ENV PATH="/usr/x86_64-w64-mingw32/bin:${PATH}"
+# 設定環境變數
+ENV PYTHONPATH=/app
+ENV PORT=8501
 
-# 運行打包命令
-CMD ["python3", "build_installer.py", "--windows"] 
+# 開放 Streamlit 端口
+EXPOSE 8501
+
+# 啟動命令
+CMD ["streamlit", "run", "src/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"] 

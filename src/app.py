@@ -57,7 +57,7 @@ def generate_keywords(topic, content):
         )
         
         # 處理回應
-        keywords = response['choices'][0]['message']['content'].strip().split('\n')
+        keywords = response['choices'][0]['message']['content'].strip().splitlines()
         return [keyword.strip() for keyword in keywords if keyword.strip()]
     except Exception as e:
         st.error(f"生成關鍵字時發生錯誤：{str(e)}")
@@ -366,7 +366,7 @@ def main():
             titles = []
             current_title = {"type": "", "title": "", "description": ""}
             
-            for line in titles_content.split('\n'):
+            for line in titles_content.splitlines():
                 line = line.strip()
                 if not line:
                     continue
@@ -435,16 +435,16 @@ def main():
                     
                     st.markdown("### 📚 參考文獻")
                     st.markdown(st.session_state.references)
-                    st.caption(f"*參考文獻數量：{len(st.session_state.references.split('\n'))} 筆*")
+                    st.caption(f"*參考文獻數量：{len(st.session_state.references.splitlines())} 筆*")
+                    
+                    # 儲存研究目的內容
+                    save_research_purpose(st.session_state.generated_purpose)
                 else:
                     st.error("生成內容失敗，請重試。")
 
     # 如果已經生成內容，顯示「開始文獻分析」按鈕
     if st.session_state.generated_purpose:
         if st.button("開始文獻分析"):
-            # 儲存研究目的內容
-            save_research_purpose(st.session_state.generated_purpose)
-            
             # 啟動文獻分析工具
             try:
                 subprocess.Popen(["streamlit", "run", "literature_analysis.py"])
@@ -571,7 +571,7 @@ def generate_literature_review_sections(title, purpose, references):
         sections = []
         current_section = {}
         
-        for line in result.split('\n'):
+        for line in result.splitlines():
             if line.startswith('===段落') and line.endswith('==='):
                 if current_section:
                     sections.append(current_section)
