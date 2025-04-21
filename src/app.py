@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 import json
 import time
@@ -9,56 +9,25 @@ import subprocess
 # 載入環境變數
 load_dotenv()
 
-# 設置 OpenAI API 金鑰
-api_key = os.getenv('OPENAI_API_KEY')
-if api_key:
-    openai.api_key = api_key
-else:
-    openai.api_key = None
+# 初始化 OpenAI 客戶端
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_keywords(topic, content):
     """使用 OpenAI 生成關鍵字"""
-    if not openai.api_key:
-        st.error("OpenAI API 金鑰未設置！")
-        return []
-
-    prompt = f"""
-請從以下研究主題和內容中，以台灣學術界常用的繁體中文術語提取10個最重要的關鍵詞（請同時提供中英對照）：
-
-研究主題：
-{topic}
-
-研究內容：
-{content}
-
-請依照以下類別提供關鍵詞：
-1. 研究領域相關（如：產品設計 / Product Design）
-2. 研究方法相關（如：設計思考 / Design Thinking）
-3. 研究對象相關（如：使用者經驗 / User Experience）
-4. 理論框架相關（如：人機互動 / Human-Computer Interaction）
-5. 預期成果相關（如：設計準則 / Design Guidelines）
-
-請使用以下格式回覆，每行一個關鍵詞：
-關鍵詞中文 / Keywords in English
-"""
-    
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        # 使用新版 API
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": """你是一位深耕於產品設計研究與教學研究的專業學術研究者，熟悉各領域的學術用語，特別是在設計、科技、人文等跨領域研究中常用的專業術語。
-在選擇關鍵詞時，請優先使用：
-1. 台灣學術界普遍接受的術語翻譯
-2. 具有學術指標性的專業用詞
-3. 符合研究主題脈絡的用語"""},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": "你是一個專業的學術研究助手，擅長分析研究主題並提供相關的關鍵字。請用中文回應。"},
+                {"role": "user", "content": f"請為以下研究主題和內容提供相關的中英文關鍵字（每個關鍵字都要包含中英文對照）：研究主題：{topic}，研究內容：{content}"}
             ],
-            temperature=0.3
+            temperature=0.7
         )
         
-        # 處理回應
-        keywords = response['choices'][0]['message']['content'].strip().splitlines()
-        return [keyword.strip() for keyword in keywords if keyword.strip()]
+        # 從回應中提取內容
+        keywords = response.choices[0].message.content.strip().splitlines()
+        return keywords
     except Exception as e:
         st.error(f"生成關鍵字時發生錯誤：{str(e)}")
         return []
@@ -72,7 +41,7 @@ def generate_search_query(selected_keywords):
 
 def generate_titles(topic, content, literature_summary):
     """使用 OpenAI 只生成研究題目選項"""
-    if not openai.api_key:
+    if not client:
         st.error("OpenAI API 金鑰未設置！")
         return None
 
@@ -110,15 +79,15 @@ def generate_titles(topic, content, literature_summary):
 """
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": """你是一位深耕於產品設計研究與教學研究的專業學術研究者，經常結合人工智慧、感測裝置、虛擬實境與人機互動，視其為「感知演算法」、「存在疑問」與「倫理界面」的探索媒介。"""},
+                {"role": "system", "content": "你是一位深耕於產品設計研究與教學研究的專業學術研究者，經常結合人工智慧、感測裝置、虛擬實境與人機互動，視其為「感知演算法」、「存在疑問」與「倫理界面」的探索媒介。"},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7
         )
-        return response['choices'][0]['message']['content'].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         st.error(f"生成研究題目時發生錯誤：{str(e)}")
         return None
@@ -185,15 +154,10 @@ def generate_full_content(research_topic, research_content, literature_summary, 
 最後請列出完整的參考文獻（APA格式）。"""
 
         # 使用 OpenAI API 生成內容
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": """你是一位經驗豐富的學術研究者，擅長結合理論與實務。在撰寫時：
-1. 根據研究主題調整專業術語和論述方式
-2. 自然地融入研究者的觀察與經驗
-3. 展現深入的思考過程和邏輯推演
-4. 維持學術嚴謹性和創新思維
-5. 確保文章結構完整且論述流暢"""},
+                {"role": "system", "content": "你是一位經驗豐富的學術研究者，擅長結合理論與實務。在撰寫時："},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -224,7 +188,7 @@ def main():
     st.write("此工具將協助您以專業學術用語撰寫研究目的陳述與文獻探討，整合理論架構與實務應用。")
     
     # 檢查 API 金鑰
-    if not openai.api_key:
+    if not client:
         st.error("請設置 OPENAI_API_KEY 環境變數！")
         st.stop()
     
@@ -558,8 +522,8 @@ def generate_literature_review_sections(title, purpose, references):
 """
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "你是一位專業的學術研究者，擅長規劃文獻探討架構。"},
                 {"role": "user", "content": prompt}
@@ -622,15 +586,10 @@ def generate_full_literature_review(title, purpose, sections, collected_literatu
 """
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": """你是一位專業的學術研究者，擅長撰寫文獻探討。
-特點：
-- 善於整合不同文獻的觀點
-- 能準確使用 APA 引用格式
-- 擅長建立文獻之間的對話
-- 能有效組織長篇幅的學術論述"""},
+                {"role": "system", "content": "你是一位專業的學術研究者，擅長撰寫文獻探討。"},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,

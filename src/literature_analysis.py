@@ -1,13 +1,15 @@
 import streamlit as st
-import openai
 import os
 from dotenv import load_dotenv
 import json
 import re
+from openai import OpenAI
 
 # 載入環境變數
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# 初始化 OpenAI 客戶端
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def extract_json_from_response(content):
     """從回應中擷取 JSON 內容"""
@@ -68,14 +70,13 @@ def analyze_research_purpose(research_purpose):
 請務必按照系統提示的 JSON 格式回覆，不要加入任何額外說明。"""
     
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.3,
-            max_tokens=2000
+            temperature=0.3
         )
         content = response.choices[0].message.content.strip()
         
@@ -130,14 +131,13 @@ def analyze_multiple_literature(section_title, literature_texts):
 }}"""
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.3,
-            max_tokens=4000
+            temperature=0.3
         )
         content = response.choices[0].message.content.strip()
         
@@ -271,14 +271,13 @@ def generate_literature_review(section_title, literature_list):
 4. 在保持客觀性的同時，也要展現個人的專業判斷"""
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.3,
-            max_tokens=4000
+            temperature=0.3
         )
         content = response.choices[0].message.content.strip()
         
