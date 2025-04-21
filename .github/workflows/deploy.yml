@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Deploy Streamlit App
 
 on:
   push:
@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
     
@@ -23,24 +23,33 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Build Windows installer
-      run: python scripts/build_installer.py --windows
+    - name: Setup Streamlit config
+      run: |
+        mkdir -p ~/.streamlit
+        echo "[server]" > ~/.streamlit/config.toml
+        echo "headless = true" >> ~/.streamlit/config.toml
+        echo "enableCORS = false" >> ~/.streamlit/config.toml
+        echo "port = ${{ env.PORT || 8501 }}" >> ~/.streamlit/config.toml
         
-    - name: Upload Windows installer
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-installer
-        path: dist/研究寫作工具-windows.zip
+    - name: Create Streamlit app files
+      run: |
+        mkdir -p build
+        cp -r src/* build/
+        cp requirements.txt build/
+        cp README.md build/
+        # 建立 streamlit 啟動檔案
+        echo "import streamlit as st" > build/streamlit_app.py
+        echo "import sys" >> build/streamlit_app.py
+        echo "import os" >> build/streamlit_app.py
+        echo "sys.path.append(os.path.dirname(__file__))" >> build/streamlit_app.py
+        echo "from app import main" >> build/streamlit_app.py
+        echo "if __name__ == '__main__':" >> build/streamlit_app.py
+        echo "    main()" >> build/streamlit_app.py
         
-    - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: softprops/action-gh-release@v1
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
       with:
-        files: |
-          dist/研究寫作工具-windows.zip
-        tag_name: v${{ github.run_number }}
-        name: Release v${{ github.run_number }}
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build
+        force_orphan: true 
