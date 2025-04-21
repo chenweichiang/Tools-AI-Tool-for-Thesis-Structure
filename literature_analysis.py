@@ -296,6 +296,15 @@ def generate_literature_review(section_title, literature_list):
         st.error(f"產生文獻探討時發生錯誤：{str(e)}")
         return None
 
+def load_research_purpose():
+    """讀取儲存的研究目的內容"""
+    try:
+        with open('.research_purpose.tmp', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get('research_purpose', '')
+    except (FileNotFoundError, json.JSONDecodeError):
+        return ''
+
 def main():
     st.title("📚 研究文獻架構分析工具")
     st.write("本工具可以協助您根據研究目的規劃文獻探討架構，並提供適合的搜尋關鍵字。")
@@ -308,9 +317,13 @@ def main():
     if 'literature_reviews' not in st.session_state:
         st.session_state.literature_reviews = {}
     
+    # 讀取先前產生的研究目的
+    saved_purpose = load_research_purpose()
+    
     # 輸入區域
     research_purpose = st.text_area(
         "請貼入您的研究目的內容",
+        value=saved_purpose,  # 使用儲存的內容作為預設值
         height=200,
         help="將您撰寫的研究目的內容貼在這裡"
     )

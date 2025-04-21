@@ -3,6 +3,7 @@ import sys
 import platform
 import shutil
 from pathlib import Path
+import PyInstaller.__main__
 
 def create_spec_file(target_platform='current'):
     """創建 PyInstaller 規格文件"""
@@ -62,32 +63,48 @@ exe = EXE(
         f.write(spec_content)
     return spec_filename
 
-def create_windows_installer():
-    install_script = '''@echo off
-chcp 65001
-echo Installing Research Writing Tool...
+def clean_dist_directory():
+    """清理舊的建置檔案"""
+    print("清理舊的建置檔案...")
+    if os.path.exists('dist'):
+        shutil.rmtree('dist')
+    if os.path.exists('build'):
+        shutil.rmtree('build')
 
-:: Create target directory
-set INSTALL_DIR=%LOCALAPPDATA%\\ResearchWriter
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
-
-:: Copy files
-xcopy /E /I /Y .\\* "%INSTALL_DIR%"
-
-:: Create desktop shortcut
-set SHORTCUT="%USERPROFILE%\\Desktop\\Research Writing Tool.lnk"
-powershell "$WS = New-Object -ComObject WScript.Shell; $SC = $WS.CreateShortcut(%SHORTCUT%); $SC.TargetPath = '%INSTALL_DIR%\\研究寫作工具.exe'; $SC.Save()"
-
-:: Prompt for OpenAI API Key
-set /p OPENAI_API_KEY="Please enter your OpenAI API Key: "
-echo OPENAI_API_KEY=%OPENAI_API_KEY% > "%INSTALL_DIR%\\.env"
-
-echo Installation completed!
-echo You can start the application from the desktop shortcut.
-pause
-'''
-    with open('dist/windows/install.bat', 'w', encoding='utf-8') as f:
-        f.write(install_script)
+def build_windows_package():
+    """建立 Windows 安裝程式"""
+    print("正在建立 Windows 安裝程式...")
+    
+    # 檢查必要檔案
+    required_files = [
+        'app.py',
+        'literature_analysis.py',
+        'requirements.txt',
+        'app_icon.ico',
+        '.env.example',
+        'README.md',
+        'installer.nsi'
+    ]
+    
+    for file in required_files:
+        if not os.path.exists(file):
+            print(f"錯誤：找不到必要檔案 {file}")
+            sys.exit(1)
+    
+    # 建立輸出目錄
+    os.makedirs('dist', exist_ok=True)
+    
+    # 執行 NSIS 編譯
+    print("正在編譯安裝程式...")
+    result = os.system('makensis installer.nsi')
+    
+    if result == 0:
+        print("Windows 安裝程式已建立完成！")
+        print("安裝檔案位於：dist/研究寫作工具安裝程式.exe")
+    else:
+        print("錯誤：無法建立安裝程式")
+        print("請確認是否已安裝 NSIS，並將其加入系統 PATH")
+        sys.exit(1)
 
 def create_macos_installer():
     install_script = '''#!/bin/bash
@@ -118,9 +135,126 @@ echo "您可以從桌面上的快捷方式啟動應用程序。"
         f.write(install_script)
     os.chmod('dist/macos/install.sh', 0o755)
 
+def build_macos_package():
+    """建立 macOS 安裝包"""
+    print("正在建立 macOS 安裝包...")
+    
+    # 清理舊的建置檔案
+    clean_dist_directory()
+    
+    # 建立 spec 檔案
+    spec_content = '''# -*- mode: python ; coding: utf-8 -*-
+
+block_cipher = None
+
+a = Analysis(
+    ['app.py'],
+    pathex=[],
+    binaries=[],
+    datas=[
+        ('.env.example', '.'),
+        ('README.md', '.'),
+        ('requirements.txt', '.'),
+    ],
+    hiddenimports=['streamlit', 'openai'],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='研究寫作工具',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=True,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='研究寫作工具',
+)
+
+app = BUNDLE(
+    coll,
+    name='研究寫作工具.app',
+    icon='app_icon.icns',
+    bundle_identifier='com.research.writer',
+    info_plist={
+        'CFBundleName': '研究寫作工具',
+        'CFBundleDisplayName': '研究寫作工具',
+        'CFBundleExecutable': '研究寫作工具',
+        'CFBundlePackageType': 'APPL',
+        'CFBundleInfoDictionaryVersion': '6.0',
+        'CFBundleIconFile': 'app_icon.icns',
+        'NSHighResolutionCapable': True,
+    }
+)
+'''
+    
+    with open('research_writer.spec', 'w', encoding='utf-8') as f:
+        f.write(spec_content)
+    
+    # 使用 spec 檔案打包
+    PyInstaller.__main__.run(['research_writer.spec'])
+    
+    # 準備安裝程式目錄
+    installer_dir = 'dist/研究寫作工具-installer'
+    os.makedirs(installer_dir, exist_ok=True)
+    
+    # 複製應用程式檔案
+    shutil.copytree('dist/研究寫作工具.app', os.path.join(installer_dir, '研究寫作工具.app'))
+    
+    # 複製其他必要檔案
+    for file in ['.env.example', 'README.md', 'requirements.txt']:
+        if os.path.exists(file):
+            shutil.copy2(file, installer_dir)
+    
+    # 建立安裝腳本
+    create_macos_installer_script(installer_dir)
+    
+    # 建立說明文件
+    create_readme(installer_dir)
+    
+    # 建立 ZIP 檔案
+    print('正在建立安裝檔案...')
+    zip_path = 'dist/研究寫作工具-macos'
+    if os.path.exists(f'{zip_path}.zip'):
+        os.remove(f'{zip_path}.zip')
+    shutil.make_archive(zip_path, 'zip', 'dist/研究寫作工具-installer')
+    
+    print('macOS 安裝程式已建立完成！')
+    print(f'安裝檔案位於：{zip_path}.zip')
+
 def build_package(target_platform='current'):
     """建立安裝包"""
     try:
+        # 清理舊的建置檔案
+        clean_dist_directory()
+        
         # 建立打包目錄
         if target_platform == 'windows':
             os.makedirs('dist/windows', exist_ok=True)
@@ -130,25 +264,10 @@ def build_package(target_platform='current'):
         # 創建規格文件
         spec_file = create_spec_file(target_platform)
         
-        # 使用 PyInstaller 打包
-        os.system(f'pyinstaller {spec_file}')
-        
-        # 移動文件到對應平台目錄
         if target_platform == 'windows':
-            # 移動文件到 windows 目錄
-            if os.path.exists('dist/研究寫作工具.exe'):
-                shutil.move('dist/研究寫作工具.exe', 'dist/windows/')
-            create_windows_installer()
+            build_windows_package()
         else:
-            # 移動文件到 macos 目錄
-            if os.path.exists('dist/研究寫作工具'):
-                shutil.move('dist/研究寫作工具', 'dist/macos/')
-            create_macos_installer()
-        
-        # 複製必要文件
-        for file in ['.env.example', 'README.md', 'requirements.txt']:
-            if os.path.exists(file):
-                shutil.copy2(file, f'dist/{"windows" if target_platform == "windows" else "macos"}/')
+            build_macos_package()
         
         print("Build completed!")
         print(f"Package has been generated in dist/{target_platform} directory.")

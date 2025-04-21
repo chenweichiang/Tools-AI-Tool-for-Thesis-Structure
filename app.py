@@ -4,6 +4,7 @@ import openai
 from dotenv import load_dotenv
 import json
 import time
+import subprocess
 
 # 載入環境變數
 load_dotenv()
@@ -212,6 +213,11 @@ def generate_full_content(research_topic, research_content, literature_summary, 
     except Exception as e:
         st.error(f"生成過程中發生錯誤：{str(e)}")
         return None, None
+
+def save_research_purpose(content):
+    """將研究目的內容儲存到暫存檔案"""
+    with open('.research_purpose.tmp', 'w', encoding='utf-8') as f:
+        json.dump({'research_purpose': content}, f, ensure_ascii=False)
 
 def main():
     st.title("研究目的與文獻探討生成助手")
@@ -432,6 +438,19 @@ def main():
                     st.caption(f"*參考文獻數量：{len(st.session_state.references.split('\n'))} 筆*")
                 else:
                     st.error("生成內容失敗，請重試。")
+
+    # 如果已經生成內容，顯示「開始文獻分析」按鈕
+    if st.session_state.generated_purpose:
+        if st.button("開始文獻分析"):
+            # 儲存研究目的內容
+            save_research_purpose(st.session_state.generated_purpose)
+            
+            # 啟動文獻分析工具
+            try:
+                subprocess.Popen(["streamlit", "run", "literature_analysis.py"])
+                st.success("已開啟文獻分析工具，請切換到新開啟的視窗繼續操作。")
+            except Exception as e:
+                st.error(f"啟動文獻分析工具時發生錯誤：{str(e)}")
 
     # 文獻探討階段
     if st.session_state.step == 8:

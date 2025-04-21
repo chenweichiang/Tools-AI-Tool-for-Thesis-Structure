@@ -22,7 +22,6 @@ wheels/
 
 # Virtual Environment
 venv/
-.venv/
 ENV/
 
 # IDE
@@ -31,13 +30,25 @@ ENV/
 *.swp
 *.swo
 
+# Temp files
+*.tmp
+*.temp
+*.log
+
+# Environment variables
+.env
+
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+Icon
+._*
 
-# Environment variables
-.env
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # Streamlit
 .streamlit/
