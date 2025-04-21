@@ -224,7 +224,14 @@ def generate_full_content(research_topic, research_content, literature_summary, 
 請以以下格式回覆：
 
 ===研究目的===
-[研究目的內容]
+# 一、研究背景與問題意識
+[內容...]
+
+# 二、研究目標與方法
+[內容...]
+
+# 三、預期貢獻與研究價值
+[內容...]
 
 ===參考文獻===
 [APA格式參考文獻列表]"""
