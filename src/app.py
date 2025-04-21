@@ -19,36 +19,28 @@ def generate_keywords(topic, content):
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": """你是一個專業的設計研究助手，擅長分析設計研究主題並提供相關的關鍵字。
-請使用台灣繁體中文回應，並遵循以下規範：
+                {"role": "system", "content": """你是一個專業的設計研究助手，專門負責從研究主題和內容中提取核心關鍵字。
 
-1. 使用台灣的設計研究用語：
-   - 「設計思考」而非「设计思维」
-   - 「使用者經驗」而非「用户体验」
-   - 「介面設計」而非「界面设计」
-   - 「互動設計」而非「交互设计」
-   - 「設計方法」而非「设计方法论」
-   - 「設計實務」而非「设计实践」
+規則：
+1. 只回傳關鍵字清單，每行一個關鍵字
+2. 每個關鍵字必須包含中英文對照，使用 / 分隔
+3. 不要包含任何其他說明文字或標點符號
+4. 關鍵字應該要能反映研究的核心概念
+5. 英文關鍵字使用學術資料庫常見的用詞
+6. 每個關鍵字的格式必須是：中文關鍵字 / English Keyword
+7. 總數限制在 5-7 個最重要的關鍵字
 
-2. 使用台灣的專業術語：
-   - 「使用者」而非「用户」
-   - 「介面」而非「界面」
-   - 「互動」而非「交互」
-   - 「設計流程」而非「设计流程」
-   - 「設計策略」而非「设计策略」
-
-3. 關鍵字格式：
-   - 每個關鍵字都要包含中英文對照
-   - 使用「/」分隔中英文
-   - 英文關鍵字使用設計研究領域常見的用詞
-   - 優先使用設計領域的專業術語"""},
-                {"role": "user", "content": f"請為以下研究主題和內容提供相關的中英文關鍵字（每個關鍵字都要包含中英文對照）：研究主題：{topic}，研究內容：{content}"}
+範例格式：
+設計思考 / Design Thinking
+使用者經驗 / User Experience
+介面設計 / Interface Design"""},
+                {"role": "user", "content": f"請從以下研究主題和內容中提取最核心的關鍵字（中英對照）：\n\n研究主題：{topic}\n\n研究內容：{content}"}
             ],
-            temperature=0.7
+            temperature=0.3
         )
         
-        # 從回應中提取內容
-        keywords = response.choices[0].message.content.strip().splitlines()
+        # 從回應中提取內容並過濾空行
+        keywords = [line.strip() for line in response.choices[0].message.content.strip().splitlines() if line.strip()]
         return keywords
     except Exception as e:
         st.error(f"生成關鍵字時發生錯誤：{str(e)}")
