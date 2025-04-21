@@ -64,25 +64,26 @@ exe = EXE(
 
 def create_windows_installer():
     install_script = '''@echo off
-echo 安裝研究寫作工具...
+chcp 65001
+echo Installing Research Writing Tool...
 
-:: 創建目標目錄
+:: Create target directory
 set INSTALL_DIR=%LOCALAPPDATA%\\ResearchWriter
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
-:: 複製文件
+:: Copy files
 xcopy /E /I /Y .\\* "%INSTALL_DIR%"
 
-:: 創建桌面快捷方式
-set SHORTCUT="%USERPROFILE%\\Desktop\\研究寫作工具.lnk"
+:: Create desktop shortcut
+set SHORTCUT="%USERPROFILE%\\Desktop\\Research Writing Tool.lnk"
 powershell "$WS = New-Object -ComObject WScript.Shell; $SC = $WS.CreateShortcut(%SHORTCUT%); $SC.TargetPath = '%INSTALL_DIR%\\研究寫作工具.exe'; $SC.Save()"
 
-:: 提示輸入 OpenAI API Key
-set /p OPENAI_API_KEY="請輸入您的 OpenAI API Key: "
+:: Prompt for OpenAI API Key
+set /p OPENAI_API_KEY="Please enter your OpenAI API Key: "
 echo OPENAI_API_KEY=%OPENAI_API_KEY% > "%INSTALL_DIR%\\.env"
 
-echo 安裝完成！
-echo 您可以從桌面上的快捷方式啟動應用程序。
+echo Installation completed!
+echo You can start the application from the desktop shortcut.
 pause
 '''
     with open('dist/windows/install.bat', 'w', encoding='utf-8') as f:
@@ -115,42 +116,46 @@ echo "您可以從桌面上的快捷方式啟動應用程序。"
 '''
     with open('dist/macos/install.sh', 'w', encoding='utf-8') as f:
         f.write(install_script)
-    # 設置執行權限
     os.chmod('dist/macos/install.sh', 0o755)
 
 def build_package(target_platform='current'):
     """建立安裝包"""
-    # 建立打包目錄
-    if target_platform == 'windows':
-        os.makedirs('dist/windows', exist_ok=True)
-    else:
-        os.makedirs('dist/macos', exist_ok=True)
-    
-    # 創建規格文件
-    spec_file = create_spec_file(target_platform)
-    
-    # 使用 PyInstaller 打包
-    os.system(f'pyinstaller {spec_file}')
-    
-    # 移動文件到對應平台目錄
-    if target_platform == 'windows':
-        # 移動文件到 windows 目錄
-        if os.path.exists('dist/研究寫作工具.exe'):
-            shutil.move('dist/研究寫作工具.exe', 'dist/windows/')
-        create_windows_installer()
-    else:
-        # 移動文件到 macos 目錄
-        if os.path.exists('dist/研究寫作工具'):
-            shutil.move('dist/研究寫作工具', 'dist/macos/')
-        create_macos_installer()
-    
-    # 複製必要文件
-    for file in ['.env.example', 'README.md', 'requirements.txt']:
-        if os.path.exists(file):
-            shutil.copy2(file, f'dist/{"windows" if target_platform == "windows" else "macos"}/')
-    
-    print("打包完成！")
-    print(f"安裝包已生成在 dist/{target_platform} 目錄中。")
+    try:
+        # 建立打包目錄
+        if target_platform == 'windows':
+            os.makedirs('dist/windows', exist_ok=True)
+        else:
+            os.makedirs('dist/macos', exist_ok=True)
+        
+        # 創建規格文件
+        spec_file = create_spec_file(target_platform)
+        
+        # 使用 PyInstaller 打包
+        os.system(f'pyinstaller {spec_file}')
+        
+        # 移動文件到對應平台目錄
+        if target_platform == 'windows':
+            # 移動文件到 windows 目錄
+            if os.path.exists('dist/研究寫作工具.exe'):
+                shutil.move('dist/研究寫作工具.exe', 'dist/windows/')
+            create_windows_installer()
+        else:
+            # 移動文件到 macos 目錄
+            if os.path.exists('dist/研究寫作工具'):
+                shutil.move('dist/研究寫作工具', 'dist/macos/')
+            create_macos_installer()
+        
+        # 複製必要文件
+        for file in ['.env.example', 'README.md', 'requirements.txt']:
+            if os.path.exists(file):
+                shutil.copy2(file, f'dist/{"windows" if target_platform == "windows" else "macos"}/')
+        
+        print("Build completed!")
+        print(f"Package has been generated in dist/{target_platform} directory.")
+        
+    except Exception as e:
+        print(f"Error during build process: {str(e)}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == '__main__':
     # 檢查命令行參數
