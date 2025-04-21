@@ -49,16 +49,18 @@
 
 1. 下載或克隆此專案
 2. 開啟終端機（Terminal）並進入專案目錄
-3. 執行安裝腳本：
+3. 執行以下命令生成安裝檔：
    ```bash
-   chmod +x install.sh
-   ./install.sh
+   python3 build_installer.py
    ```
-4. 根據提示輸入您的 OpenAI API Key
-5. 安裝程式會自動：
-   - 在 `~/Applications/ResearchWriter` 創建安裝目錄
+4. 執行安裝腳本：
+   ```bash
+   bash install.sh
+   ```
+5. 根據提示輸入您的 OpenAI API Key
+6. 安裝程式會自動：
+   - 在指定目錄創建安裝目錄
    - 複製必要檔案
-   - 在桌面創建快捷方式
    - 設置環境變數
 
 ### macOS 使用者（開發者方式）
@@ -68,7 +70,7 @@
 3. 在終端機中進入專案目錄
 4. 執行以下命令：
    ```bash
-   python -m venv venv
+   python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
    ```
