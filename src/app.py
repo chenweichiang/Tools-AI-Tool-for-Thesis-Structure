@@ -34,10 +34,25 @@ def generate_keywords(topic, content):
 
 def generate_search_query(selected_keywords):
     """生成搜尋查詢字串"""
-    # 從中英對照格式中提取英文關鍵字
-    english_keywords = [k.split(' / ')[-1].strip() for k in selected_keywords]
-    # 只用空格連接英文關鍵字
-    return ' '.join(english_keywords)
+    try:
+        # 使用 OpenAI 生成完整的英文搜尋句子
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a research assistant helping to create academic search queries. Create natural, complete English sentences that would be effective for academic database searches."},
+                {"role": "user", "content": f"Create a comprehensive academic search query using these keywords: {', '.join(selected_keywords)}. The query should be a complete English sentence suitable for academic database searches."}
+            ],
+            temperature=0.3
+        )
+        
+        # 從回應中提取搜尋句子
+        search_query = response.choices[0].message.content.strip()
+        return search_query
+    except Exception as e:
+        st.error(f"生成搜尋查詢時發生錯誤：{str(e)}")
+        # 如果 API 呼叫失敗，退回到簡單的關鍵字組合
+        english_keywords = [k.split(' / ')[-1].strip() for k in selected_keywords]
+        return ' '.join(english_keywords)
 
 def generate_titles(topic, content, literature_summary):
     """使用 OpenAI 只生成研究題目選項"""

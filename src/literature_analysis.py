@@ -27,48 +27,41 @@ def extract_json_from_response(content):
 
 def analyze_research_purpose(research_purpose):
     """分析研究目的並產生文獻探討架構"""
-    system_prompt = """您是一位專業的研究方法專家，擅長規劃文獻探討架構。
-請使用台灣繁體中文的用字習慣回覆，例如：
-- 使用「夥伴」而非「伙伴」
-- 使用「甚麼」而非「什麼」
-- 使用「裡面」而非「里面」
-- 使用「群組」而非「分組」
-- 使用「資料」而非「数据」
-- 使用「系統」而非「系统」
-- 使用「程式」而非「程序」
-- 使用「使用者」而非「用戶」
-- 使用「網路」而非「网络」
-- 使用「軟體」而非「软件」
-請嚴格按照以下 JSON 格式回覆，不要加入任何其他說明文字：
+    system_prompt = """You are a professional research methodology expert specializing in literature review structure planning.
+Please respond in Traditional Chinese for all content except search queries.
+For search queries, provide complete English sentences that are effective for academic database searches.
+
+The response must strictly follow this JSON format with no additional text:
 {
     "sections": [
         {
-            "title": "中文章節標題",
+            "title_zh": "中文章節標題",
+            "title_en": "English Section Title",
             "description": "本章節應該探討的重點",
-            "search_strings": [
+            "search_queries": [
                 {
-                    "description": "搜尋重點描述",
-                    "query": "完整的英文搜尋字串或自然語句"
+                    "focus": "搜尋重點描述",
+                    "query": "A complete English sentence for academic database search that focuses on specific aspects of the research"
                 }
             ]
         }
     ]
 }"""
 
-    user_prompt = f"""請根據以下研究目的，分析並提供：
-1. 3-5個適合的文獻探討章節標題
-2. 每個標題的重點說明
-3. 針對每個標題提供 2-3 個英文搜尋字串，這些字串應該要：
-   - 可以直接複製到 SciSpace 搜尋框使用
-   - 使用完整的英文自然語句或關鍵字組合
-   - 包含該主題最重要的搜尋重點
-   - 考慮近五年的研究趨勢
+    user_prompt = f"""Based on the following research purpose, please provide:
+1. 3-5 appropriate literature review section titles (in both Chinese and English)
+2. Description of key points for each section
+3. 2-3 search queries for each section that:
+   - Can be directly used in academic databases
+   - Use complete, natural English sentences
+   - Cover the most important search aspects
+   - Consider research trends in the past five years
 
-研究目的內容：
+Research Purpose:
 {research_purpose}
 
-請務必按照系統提示的 JSON 格式回覆，不要加入任何額外說明。"""
-    
+Please strictly follow the JSON format specified in the system message, with no additional explanation."""
+
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -337,7 +330,7 @@ def main():
             if result and 'sections' in result:
                 st.session_state.sections = result['sections']
                 st.session_state.literature_data = {
-                    section['title']: {'literature': []}
+                    section['title_zh']: {'literature': []}
                     for section in result['sections']
                 }
     
@@ -345,12 +338,12 @@ def main():
     if st.session_state.sections:
         for section in st.session_state.sections:
             st.markdown("---")
-            st.markdown(f"## {section['title']}")
+            st.markdown(f"## {section['title_zh']}")
             st.markdown(f"**重點說明：**\n{section['description']}")
             
             st.markdown("**建議搜尋字串：**")
-            for search in section['search_strings']:
-                st.markdown(f"- {search['description']}:")
+            for search in section['search_queries']:
+                st.markdown(f"- {search['focus']}:")
                 st.code(search['query'], language="text")
             
             # 文獻收集區域
@@ -359,7 +352,7 @@ def main():
             # 文獻輸入
             new_literature = st.text_area(
                 "請貼入多篇文獻的 APA 引用格式與摘要（每篇文獻之間請空一行）",
-                key=f"literature_{section['title']}",
+                key=f"literature_{section['title_zh']}",
                 height=400,
                 help="從 SciSpace 複製多篇文獻的 APA 引用格式和摘要，每篇文獻之間請空一行"
             )
@@ -368,33 +361,33 @@ def main():
             
             # 新增文獻按鈕
             with col1:
-                if st.button(f"分析並新增文獻到「{section['title']}」", key=f"add_{section['title']}"):
+                if st.button(f"分析並新增文獻到「{section['title_zh']}」", key=f"add_{section['title_zh']}"):
                     if new_literature.strip():
                         with st.spinner("正在分析文獻內容..."):
-                            analysis_results = analyze_multiple_literature(section['title'], new_literature)
+                            analysis_results = analyze_multiple_literature(section['title_zh'], new_literature)
                             if analysis_results:
-                                st.session_state.literature_data[section['title']]['literature'].extend(analysis_results)
+                                st.session_state.literature_data[section['title_zh']]['literature'].extend(analysis_results)
                                 st.success(f"已成功分析並新增 {len(analysis_results)} 篇文獻")
             
             # 產生文獻探討按鈕
             with col2:
-                if st.button(f"產生「{section['title']}」的文獻探討", key=f"review_{section['title']}"):
-                    if st.session_state.literature_data[section['title']]['literature']:
+                if st.button(f"產生「{section['title_zh']}」的文獻探討", key=f"review_{section['title_zh']}"):
+                    if st.session_state.literature_data[section['title_zh']]['literature']:
                         with st.spinner("正在產生文獻探討內容..."):
                             review_result = generate_literature_review(
-                                section['title'],
-                                st.session_state.literature_data[section['title']]['literature']
+                                section['title_zh'],
+                                st.session_state.literature_data[section['title_zh']]['literature']
                             )
                             if review_result:
-                                st.session_state.literature_reviews[section['title']] = review_result
+                                st.session_state.literature_reviews[section['title_zh']] = review_result
                                 st.success("已成功產生文獻探討內容")
                     else:
                         st.warning("請先新增文獻再產生文獻探討")
             
             # 顯示已收集的文獻
-            if st.session_state.literature_data[section['title']]['literature']:
+            if st.session_state.literature_data[section['title_zh']]['literature']:
                 st.markdown("#### 已收集的文獻")
-                for i, lit in enumerate(st.session_state.literature_data[section['title']]['literature']):
+                for i, lit in enumerate(st.session_state.literature_data[section['title_zh']]['literature']):
                     with st.expander(f"文獻 {i+1}"):
                         st.markdown("**引用格式：**")
                         st.markdown(lit['citation'])
@@ -408,8 +401,8 @@ def main():
                         st.markdown(lit['usage_suggestion'])
             
             # 顯示文獻探討內容
-            if section['title'] in st.session_state.literature_reviews:
-                review = st.session_state.literature_reviews[section['title']]
+            if section['title_zh'] in st.session_state.literature_reviews:
+                review = st.session_state.literature_reviews[section['title_zh']]
                 with st.expander("📝 文獻探討內容", expanded=True):
                     st.markdown("### 文獻探討")
                     st.markdown(review['literature_review'])
