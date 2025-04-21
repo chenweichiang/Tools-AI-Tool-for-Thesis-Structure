@@ -13,10 +13,10 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     
@@ -36,7 +36,8 @@ jobs:
         7z a -tzip ../../研究寫作工具-windows.zip *
     
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: windows-package
-        path: 研究寫作工具-windows.zip 
+        path: 研究寫作工具-windows.zip
+        retention-days: 5 
