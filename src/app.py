@@ -401,6 +401,10 @@ def main():
                     st.markdown(st.session_state.references)
                     st.caption(f"*參考文獻數量：{len(st.session_state.references.splitlines())} 筆*")
                     
+                    # 如果已經生成內容，顯示「開始文獻分析」按鈕
+                    if st.session_state.generated_purpose:
+                        st.info("您可以在側邊欄選擇「文獻分析工具」來開始進行文獻分析。")
+                    
                     # 儲存研究目的內容
                     save_research_purpose(st.session_state.generated_purpose)
                 else:
@@ -408,13 +412,10 @@ def main():
 
     # 如果已經生成內容，顯示「開始文獻分析」按鈕
     if st.session_state.generated_purpose:
-        if st.button("開始文獻分析"):
-            # 啟動文獻分析工具
-            try:
-                subprocess.Popen(["streamlit", "run", "literature_analysis.py"])
-                st.success("已開啟文獻分析工具，請切換到新開啟的視窗繼續操作。")
-            except Exception as e:
-                st.error(f"啟動文獻分析工具時發生錯誤：{str(e)}")
+        st.info("您可以在側邊欄選擇「文獻分析工具」來開始進行文獻分析。")
+        
+        # 儲存研究目的內容
+        save_research_purpose(st.session_state.generated_purpose)
 
     # 文獻探討階段
     if st.session_state.step == 8:
