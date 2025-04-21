@@ -1,4 +1,4 @@
-name: Deploy Streamlit App
+name: Build and Deploy
 
 on:
   push:
@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -23,16 +23,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Create Streamlit config
-      run: |
-        mkdir -p ~/.streamlit
-        echo '[server]' > ~/.streamlit/config.toml
-        echo 'headless = true' >> ~/.streamlit/config.toml
-        echo 'enableCORS = false' >> ~/.streamlit/config.toml
-        echo 'port = ${{ env.PORT || 8501 }}' >> ~/.streamlit/config.toml
+    - name: Build Windows installer
+      run: python scripts/build_installer.py --windows
         
-    - name: Build and Deploy
-      uses: JamesIves/github-pages-deploy-action@v4
+    - name: Upload Windows installer
+      uses: actions/upload-artifact@v4
       with:
-        folder: src
-        branch: gh-pages 
+        name: windows-installer
+        path: dist/研究寫作工具-windows.zip
+        
+    - name: Create Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/研究寫作工具-windows.zip
+        tag_name: v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

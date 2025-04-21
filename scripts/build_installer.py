@@ -2,6 +2,7 @@ import os
 import sys
 import platform
 import shutil
+import subprocess
 from pathlib import Path
 import PyInstaller.__main__
 
@@ -71,40 +72,92 @@ def clean_dist_directory():
     if os.path.exists('build'):
         shutil.rmtree('build')
 
-def build_windows_package():
+def build_windows_installer():
     """建立 Windows 安裝程式"""
-    print("正在建立 Windows 安裝程式...")
+    print("開始建立 Windows 安裝程式...")
     
-    # 檢查必要檔案
-    required_files = [
-        '../src/app.py',
-        '../src/literature_analysis.py',
-        '../requirements.txt',
-        '../resources/app_icon.ico',
-        '../.env.example',
-        '../README.md',
-        'installer.nsi'
+    # 建立暫存目錄
+    build_dir = Path("build")
+    dist_dir = Path("dist")
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+    if dist_dir.exists():
+        shutil.rmtree(dist_dir)
+    build_dir.mkdir(exist_ok=True)
+    dist_dir.mkdir(exist_ok=True)
+    
+    # 複製必要檔案
+    print("複製檔案...")
+    files_to_copy = [
+        "src/app.py",
+        "src/literature_analysis.py",
+        "requirements.txt",
+        ".env.example",
+        "README.md",
+        "LICENSE"
     ]
     
-    for file in required_files:
-        if not os.path.exists(file):
-            print(f"錯誤：找不到必要檔案 {file}")
-            sys.exit(1)
+    for file in files_to_copy:
+        src = Path(file)
+        if src.exists():
+            dst = build_dir / src.name
+            shutil.copy2(src, dst)
+            print(f"已複製: {src} -> {dst}")
     
-    # 建立輸出目錄
-    os.makedirs('dist', exist_ok=True)
+    # 建立安裝腳本
+    print("建立安裝腳本...")
+    installer_script = """@echo off
+echo 安裝研究寫作工具...
+
+:: 檢查 Python
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo 未安裝 Python，正在下載並安裝...
+    curl -o python-installer.exe https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe
+    python-installer.exe /quiet InstallAllUsers=1 PrependPath=1
+    del python-installer.exe
+)
+
+:: 建立虛擬環境
+python -m venv venv
+call venv\\Scripts\\activate
+
+:: 安裝相依套件
+pip install -r requirements.txt
+
+:: 設定 OpenAI API 金鑰
+set /p OPENAI_API_KEY="請輸入您的 OpenAI API 金鑰: "
+echo OPENAI_API_KEY=%OPENAI_API_KEY% > .env
+
+:: 建立桌面捷徑
+echo Set oWS = WScript.CreateObject("WScript.Shell") > CreateShortcut.vbs
+echo sLinkFile = oWS.SpecialFolders("Desktop") ^& "\研究寫作工具.lnk" >> CreateShortcut.vbs
+echo Set oLink = oWS.CreateShortcut(sLinkFile) >> CreateShortcut.vbs
+echo oLink.TargetPath = "%~dp0venv\\Scripts\\streamlit.exe" >> CreateShortcut.vbs
+echo oLink.Arguments = "run app.py" >> CreateShortcut.vbs
+echo oLink.WorkingDirectory = "%~dp0" >> CreateShortcut.vbs
+echo oLink.Save >> CreateShortcut.vbs
+cscript CreateShortcut.vbs
+del CreateShortcut.vbs
+
+echo 安裝完成！
+echo 您可以從桌面的捷徑啟動程式。
+pause
+"""
     
-    # 執行 NSIS 編譯
-    print("正在編譯安裝程式...")
-    result = os.system('makensis installer.nsi')
+    with open(build_dir / "install.bat", "w", encoding="utf-8") as f:
+        f.write(installer_script)
     
-    if result == 0:
-        print("Windows 安裝程式已建立完成！")
-        print("安裝檔案位於：dist/windows_installer.exe")
-    else:
-        print("錯誤：無法建立安裝程式")
-        print("請確認是否已安裝 NSIS，並將其加入系統 PATH")
-        sys.exit(1)
+    # 建立壓縮檔
+    print("建立壓縮檔...")
+    shutil.make_archive(
+        str(dist_dir / "研究寫作工具-windows"),
+        "zip",
+        build_dir
+    )
+    
+    print("Windows 安裝程式建立完成！")
+    print(f"安裝檔位置: {dist_dir}/研究寫作工具-windows.zip")
 
 def create_macos_installer():
     install_script = '''#!/bin/bash
@@ -134,6 +187,12 @@ echo "您可以從桌面上的快捷方式啟動應用程序。"
     with open('dist/macos/install.sh', 'w', encoding='utf-8') as f:
         f.write(install_script)
     os.chmod('dist/macos/install.sh', 0o755)
+
+def build_macos_installer():
+    """建立 macOS 安裝程式"""
+    print("開始建立 macOS 安裝程式...")
+    # macOS 安裝程式建立邏輯...
+    pass
 
 def build_macos_package():
     """建立 macOS 安裝包"""
@@ -265,7 +324,7 @@ def build_package(target_platform='current'):
         spec_file = create_spec_file(target_platform)
         
         if target_platform == 'windows':
-            build_windows_package()
+            build_windows_installer()
         else:
             build_macos_package()
         
@@ -280,5 +339,9 @@ if __name__ == '__main__':
     # 檢查命令行參數
     if len(sys.argv) > 1 and sys.argv[1] == '--windows':
         build_package('windows')
+    elif len(sys.argv) > 1 and sys.argv[1] == '--macos':
+        build_package('macos')
     else:
-        build_package('current') 
+        print("請指定要建立的安裝程式類型：")
+        print("  --windows : 建立 Windows 安裝程式")
+        print("  --macos   : 建立 macOS 安裝程式") 
