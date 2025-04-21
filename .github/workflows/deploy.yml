@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy Streamlit App
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,13 +23,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Run tests
+    - name: Create Streamlit config
       run: |
-        python -m pytest tests/ || true
+        mkdir -p ~/.streamlit
+        echo '[server]' > ~/.streamlit/config.toml
+        echo 'headless = true' >> ~/.streamlit/config.toml
+        echo 'enableCORS = false' >> ~/.streamlit/config.toml
+        echo 'port = ${{ env.PORT || 8501 }}' >> ~/.streamlit/config.toml
         
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
+    - name: Build and Deploy
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./src 
+        folder: src
+        branch: gh-pages 
