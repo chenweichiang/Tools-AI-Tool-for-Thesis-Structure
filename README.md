@@ -1,6 +1,6 @@
 # 研究目的與文獻探討生成助手 v1.0.0
 
-這是一個基於 Streamlit 和 OpenAI GPT-4 開發的研究寫作輔助工具，專門用於協助研究者生成研究目的和文獻探討。本工具支援多種研究領域，能夠根據使用者提供的研究主題、內容規劃和文獻資料，生成結構完整、邏輯清晰的研究目的陳述。
+這是一個基於 Next.js 和 OpenAI GPT-4 開發的研究寫作輔助工具，專門用於協助研究者生成研究目的和文獻探討。本工具支援多種研究領域，能夠根據使用者提供的研究主題、內容規劃和文獻資料，生成結構完整、邏輯清晰的研究目的陳述。
 
 ## 系統展示
 
@@ -26,7 +26,7 @@
 
 ## 系統需求
 
-- Python 3.8 或以上版本
+- Node.js 18.0 或以上版本
 - OpenAI API 金鑰（GPT-4 權限）
 - 穩定的網路連接
 - 作業系統：
@@ -36,9 +36,9 @@
 
 ## 安裝步驟
 
-1. 確認 Python 環境：
+1. 確認 Node.js 環境：
 ```bash
-python --version  # 確認版本 >= 3.8
+node --version  # 確認版本 >= 18.0
 ```
 
 2. 克隆專案到本地：
@@ -47,56 +47,38 @@ git clone [專案網址]
 cd [專案資料夾]
 ```
 
-3. 建立並啟動虛擬環境：
+3. 安裝依賴套件：
+```bash
+npm install
+# 或使用 yarn
+yarn install
+```
+
+4. 設置環境變數：
+   - 複製 `.env.example` 為 `.env.local`：
 ```bash
 # macOS/Linux
-python -m venv venv
-source venv/bin/activate
+cp .env.example .env.local
 
 # Windows
-python -m venv venv
-.\venv\Scripts\activate
+copy .env.example .env.local
 ```
-
-4. 安裝依賴套件：
-```bash
-pip install -r requirements.txt
-```
-
-5. 安裝 Watchdog 提升性能：
-```bash
-# macOS
-xcode-select --install  # 如果尚未安裝 Command Line Tools
-pip install watchdog
-
-# Windows/Linux
-pip install watchdog
-```
-
-6. 設置環境變數：
-   - 複製 `.env.example` 為 `.env`：
-```bash
-# macOS/Linux
-cp .env.example .env
-
-# Windows
-copy .env.example .env
-```
-   - 在 `.env` 文件中設置您的 OpenAI API 金鑰：
+   - 在 `.env.local` 文件中設置您的 OpenAI API 金鑰：
 ```bash
 OPENAI_API_KEY=您的API金鑰
 ```
 
 ## 使用方法
 
-1. 啟動應用程式：
+1. 啟動開發伺服器：
 ```bash
-streamlit run app.py
+npm run dev
+# 或使用 yarn
+yarn dev
 ```
 
 2. 在瀏覽器中訪問系統（自動開啟）：
-   - 本地網址：http://localhost:8502
-   - 網路網址：http://[您的IP]:8502
+   - 本地網址：http://localhost:3000
 
 3. 依照系統引導完成以下步驟：
    - 第一步：輸入研究主題（研究動機、問題意識）
@@ -154,4 +136,4 @@ streamlit run app.py
 1. 在 GitHub 上開啟 Issue
 2. 提供詳細的問題描述和重現步驟
 3. 附上相關的錯誤訊息或截圖
-4. 說明您的系統環境（作業系統、Python 版本等） 
+4. 說明您的系統環境（作業系統、Node.js 版本等） 
