@@ -202,13 +202,32 @@ def generate_full_content(research_topic, research_content, literature_summary, 
    - 討論研究的創新之處
    - 提出未來研究方向
 
-請注意：
-1. 文獻引用要自然地融入論述中（APA格式）
-2. 設計理論與實務的連結要有說服力
-3. 確保研究目的的可行性與創新性
-4. 整體論述要流暢且具邏輯性
+【參考文獻要求】
+1. 格式規範：
+   - 嚴格遵循 APA 第七版格式
+   - 依照字母順序排列
+   - 中文文獻在前，英文文獻在後
+   - 同一作者的多篇文獻依年代排序
 
-最後請列出完整的參考文獻（APA格式）。"""
+2. 引用規則：
+   - 只列出在內文中實際引用過的文獻
+   - 確保每個引用都有對應的參考文獻
+   - 每個重要論點都需要有文獻支持
+   - 引用時要標明年份，必要時標明頁碼
+
+3. 文獻類型：
+   - 學術期刊論文
+   - 研討會論文
+   - 專書或專書章節
+   - 博碩士論文（如適用）
+
+請以以下格式回覆：
+
+===研究目的===
+[研究目的內容]
+
+===參考文獻===
+[APA格式參考文獻列表]"""
 
         # 使用 OpenAI API 生成內容
         response = client.chat.completions.create(
@@ -246,10 +265,15 @@ def generate_full_content(research_topic, research_content, literature_summary, 
    - 「實施」而非「实行」
    - 「成效」而非「成果」
 
-5. 文獻引用格式：
-   - 使用 APA 第七版格式
-   - 中文作者姓名使用全名
-   - 英文作者姓名使用姓氏加名字縮寫"""},
+5. APA 參考文獻格式：
+   - 中文文獻：
+     期刊：作者（年代）。文章標題。期刊名稱，卷（期），頁碼。
+     專書：作者（年代）。書名。出版社。
+   - 英文文獻：
+     期刊：Author, A. A. (Year). Title. Journal Name, Volume(Issue), pages.
+     專書：Author, A. A. (Year). Book title. Publisher.
+   - 中文作者姓名完整列出
+   - 英文作者姓氏加名字縮寫"""},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -260,8 +284,8 @@ def generate_full_content(research_topic, research_content, literature_summary, 
         generated_text = response.choices[0].message.content.strip()
         
         # 分割研究目的和參考文獻
-        parts = generated_text.split('參考文獻')
-        purpose_content = parts[0].strip()
+        parts = generated_text.split('===參考文獻===')
+        purpose_content = parts[0].replace('===研究目的===', '').strip()
         references_content = parts[1].strip() if len(parts) > 1 else ""
 
         return purpose_content, references_content
