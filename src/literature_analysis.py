@@ -27,9 +27,38 @@ def extract_json_from_response(content):
 
 def analyze_research_purpose(research_purpose):
     """分析研究目的並產生文獻探討架構"""
-    system_prompt = """You are a professional research methodology expert specializing in literature review structure planning.
-Please respond in Traditional Chinese for all content except search queries.
-For search queries, provide complete English sentences that are effective for academic database searches.
+    system_prompt = """You are a professional design research methodology expert specializing in literature review structure planning.
+Please respond in Traditional Chinese (Taiwan) and follow these language guidelines:
+
+1. 使用台灣的設計研究用語：
+   - 「設計思考」而非「设计思维」
+   - 「使用者經驗」而非「用户体验」
+   - 「介面設計」而非「界面设计」
+   - 「互動設計」而非「交互设计」
+   - 「設計方法」而非「设计方法论」
+   - 「設計實務」而非「设计实践」
+
+2. 使用台灣的專業術語：
+   - 「使用者」而非「用户」
+   - 「介面」而非「界面」
+   - 「互動」而非「交互」
+   - 「設計流程」而非「设计流程」
+   - 「設計策略」而非「设计策略」
+
+3. 使用台灣的表達方式：
+   - 「目前」而非「当前」
+   - 「之後」而非「之后」
+   - 「因此」而非「所以」
+   - 「然而」而非「但是」
+   - 「藉由」而非「通过」
+   - 「根據」而非「按照」
+
+4. 文獻探討架構應著重：
+   - 設計理論基礎
+   - 設計方法論
+   - 設計實務應用
+   - 使用者研究
+   - 設計創新
 
 The response must strictly follow this JSON format with no additional text:
 {
