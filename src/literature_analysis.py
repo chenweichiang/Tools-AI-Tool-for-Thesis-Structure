@@ -70,7 +70,17 @@ Please respond in Traditional Chinese (Taiwan) and follow these language guideli
    - 配合研究方法規劃對應的理論基礎
    - 針對創新觀點提供充分的理論支持
 
-6. 搜尋策略規劃：
+6. 小標題設計原則：
+   - 緊扣研究核心目標
+   - 反映該段落的主要論述重點
+   - 符合學術寫作規範
+   - 具有邏輯層次性
+   - 能清楚指引讀者理解文章結構
+   - 每個章節 3-4 個小標題
+   - 確保小標題之間的連貫性
+   - 由淺入深的漸進式安排
+
+7. 搜尋策略規劃：
    - 配合各章節主題設計精確的搜尋策略
    - 考慮近五年的研究趨勢
    - 涵蓋理論與實務的相關文獻
@@ -84,6 +94,13 @@ The response must strictly follow this JSON format with no additional text:
             "title_zh": "中文章節標題",
             "title_en": "English Section Title",
             "description": "本章節應該探討的重點",
+            "subtitles": [
+                {
+                    "subtitle_zh": "中文小標題",
+                    "subtitle_en": "English Subtitle",
+                    "content_focus": "此小節應該探討的具體內容重點"
+                }
+            ],
             "search_queries": [
                 {
                     "focus": "搜尋重點描述",
@@ -115,6 +132,11 @@ The response must strictly follow this JSON format with no additional text:
 
 3. For each section, provide:
    - Clear and specific section titles (both Chinese and English)
+   - 3-4 subtitles that:
+     * Reflect the core research objectives
+     * Show logical progression of ideas
+     * Cover key aspects of the section
+     * Guide readers through the content structure
    - Detailed description of key points to be discussed
    - 2-3 targeted search queries that:
      * Can be directly used in academic databases
